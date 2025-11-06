@@ -1,0 +1,54 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+env/
+venv/
+.venv/
+env.bak/
+venv.bak/
+
+# Python packaging / build
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+*.egg
+
+# Installer logs
+pip-log.txt
+
+
+/
+
+# MLflow, wandb, tensorboard
+mlruns/
+wandb/
+events.out.tfevents.*
+
+# Logs
+logs/
+*.log
+
+# IDEs and editor settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Environment / secrets
+.env
+.env.*
+secrets.json
+*.pem
+*.key
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Misc
+*.swp
+.cache/
