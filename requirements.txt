@@ -1,0 +1,29 @@
+# Requirements for AI Skin Condition Detection
+# Tested with Python 3.8-3.11. Adjust torch/tensorflow for GPU/CUDA as needed.
+
+numpy>=1.24,<1.27
+opencv-python>=4.7,<5
+Pillow>=9.4,<10
+matplotlib>=3.6,<4
+
+# PyTorch: choose CPU or GPU build as appropriate. Example pins for stable 2.x series:
+torch>=2.1,<3
+torchvision>=0.16,<1
+
+# TensorFlow / Keras (only if you need TF; can conflict with some torch GPU setups)
+tensorflow>=2.12,<3
+Keras>=2.12,<3
+
+scikit-learn>=1.2,<2
+scikit-image>=0.20,<1
+albumentations>=1.3,<2
+
+tqdm>=4.65,<5
+flask>=2.2,<3
+fastapi>=0.95,<1
+uvicorn>=0.22,<1
+
+pandas>=2.0,<3
+seaborn>=0.13,<1
+mediapipe>=0.10,<1
+requests>=2.31,<3
