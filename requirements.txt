@@ -1,29 +1,50 @@
-# Requirements for AI Skin Condition Detection
-# Tested with Python 3.8-3.11. Adjust torch/tensorflow for GPU/CUDA as needed.
+# AI Skin Condition Detection Project Requirements (Version-Pinned)
 
-numpy>=1.24,<1.27
-opencv-python>=4.7,<5
-Pillow>=9.4,<10
-matplotlib>=3.6,<4
+# Core dependencies
+numpy>=1.23.5
+pandas>=2.0.3
+scikit-learn>=1.3.0
+scipy>=1.11.0
+matplotlib>=3.7.1
+tqdm>=4.66.1
 
-# PyTorch: choose CPU or GPU build as appropriate. Example pins for stable 2.x series:
-torch>=2.1,<3
-torchvision>=0.16,<1
+# Deep learning frameworks
+torch>=2.1.0
+torchvision>=0.16.0
+tensorflow>=2.14.0
+keras>=2.14.0
 
-# TensorFlow / Keras (only if you need TF; can conflict with some torch GPU setups)
-tensorflow>=2.12,<3
-Keras>=2.12,<3
+# Computer vision and face processing
+opencv-python>=4.8.1.78
+opencv-contrib-python>=4.8.1.78
+mediapipe>=0.10.5
+scikit-image>=0.21.0
+albumentations>=1.3.1
+Pillow>=10.0.0
 
-scikit-learn>=1.2,<2
-scikit-image>=0.20,<1
-albumentations>=1.3,<2
+# Image enhancement and super-resolution (future use)
+real-esrgan>=0.3.0
+onnx>=1.15.0
+onnxruntime>=1.16.0
 
-tqdm>=4.65,<5
-flask>=2.2,<3
-fastapi>=0.95,<1
-uvicorn>=0.22,<1
+# Visualization / debugging
+seaborn>=0.12.2
+plotly>=5.17.0
 
-pandas>=2.0,<3
-seaborn>=0.13,<1
-mediapipe>=0.10,<1
-requests>=2.31,<3
+# Backend / API
+flask>=3.0.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Utility packages
+requests>=2.31.0
+joblib>=1.3.2
+pyyaml>=6.0.1
+
+# Experiment tracking (optional)
+tensorboard>=2.14.0
+wandb>=0.16.0
+
+# Optional (for notebooks)
+jupyterlab>=4.0.5
+notebook>=7.0.4
