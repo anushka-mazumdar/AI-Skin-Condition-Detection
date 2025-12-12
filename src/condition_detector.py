@@ -1,62 +1,107 @@
 import os
 import json
+import torch
 import numpy as np
-import tensorflow as tf
 import cv2
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array
+from torchvision import transforms, models
+import torch.nn.functional as F
 
-# === Paths ===
 MODEL_DIR = "models/skin_condition"
-MODEL_PATH = os.path.join(MODEL_DIR, "best_model.h5")
+MODEL_PATH = os.path.join(MODEL_DIR, "best_model.pt")
 LABEL_MAP_PATH = os.path.join(MODEL_DIR, "label_map.json")
 
-# === Load model and label map ===
-print("🔍 Loading skin condition model...")
-model = load_model(MODEL_PATH)
+IMG_SIZE = 224
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-with open(LABEL_MAP_PATH, "r") as f:
-    label_map = json.load(f)
-label_map = {int(k): v for k, v in label_map.items()}
+# cached model
+_model = None
+_label_map = None
+_transform = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.Resize((IMG_SIZE, IMG_SIZE)),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                         std=[0.229, 0.224, 0.225])
+])
 
-IMG_SIZE = (224, 224)
 
-# === Predict Function ===
+def _lazy_load():
+    global _model, _label_map
+    if _model is not None and _label_map is not None:
+        return
+
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(f"Model not found at {MODEL_PATH}. Train the model first.")
+
+    data = torch.load(MODEL_PATH, map_location=DEVICE)
+    # Rebuild a MobileNetV2 and load state dict
+    num_classes = data.get("num_classes", None)
+    if num_classes is None:
+        raise ValueError("Saved checkpoint missing 'num_classes' field.")
+
+    model = models.mobilenet_v2(pretrained=False)
+    in_features = model.classifier[1].in_features
+    model.classifier = torch.nn.Sequential(
+        torch.nn.Dropout(0.3),
+        torch.nn.Linear(in_features, num_classes)
+    )
+    model.load_state_dict(data["model_state_dict"])
+    model.to(DEVICE)
+    model.eval()
+
+    _model = model
+
+    if os.path.exists(LABEL_MAP_PATH):
+        with open(LABEL_MAP_PATH, "r") as f:
+            _label_map = json.load(f)
+        # ensure int keys
+        _label_map = {int(k): v for k, v in _label_map.items()}
+    else:
+        # fallback: build simple index->str map
+        _label_map = {i: str(i) for i in range(num_classes)}
+
+
 def predict_condition(image_path):
     """
-    Predicts the skin condition from an enhanced face image.
+    Returns (class_name, confidence) where confidence is in [0,1].
     """
+    _lazy_load()
+
     if not os.path.exists(image_path):
-        raise FileNotFoundError(f"Image not found: {image_path}")
+        raise FileNotFoundError(image_path)
 
-    # Read and preprocess
     img = cv2.imread(image_path)
+    if img is None:
+        raise ValueError("Failed to read image: " + image_path)
+
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = cv2.resize(img, IMG_SIZE)
-    img = img_to_array(img) / 255.0
-    img = np.expand_dims(img, axis=0)
+    inp = _transform(img)
+    inp = inp.unsqueeze(0).to(DEVICE)
 
-    # Predict
-    preds = model.predict(img)
-    class_idx = np.argmax(preds[0])
-    confidence = preds[0][class_idx]
-    class_name = label_map[class_idx]
+    with torch.no_grad():
+        logits = _model(inp)
+        probs = F.softmax(logits, dim=1).cpu().numpy()[0]
+        idx = int(np.argmax(probs))
+        conf = float(probs[idx])
+        label = _label_map.get(idx, str(idx))
+    return label, conf
 
-    return class_name, float(confidence)
 
-# === Optional: Visualize Prediction ===
 def visualize_prediction(image_path):
-    condition, conf = predict_condition(image_path)
+    label, conf = predict_condition(image_path)
     img = cv2.imread(image_path)
-    label = f"{condition} ({conf*100:.1f}%)"
-    cv2.putText(img, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 
-                1, (0, 255, 0), 2, cv2.LINE_AA)
+    txt = f"{label} ({conf*100:.1f}%)"
+    cv2.putText(img, txt, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
     cv2.imshow("Prediction", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-# === Test Run ===
+
 if __name__ == "__main__":
-    test_image = "data/dataset/testing/Eczemaa/eczema-chronic-14.jpg"  # example test path
-    condition, confidence = predict_condition(test_image)
-    print(f"🩺 Detected condition: {condition} ({confidence*100:.2f}% confidence)")
+    test_img = "data/dataset/val/Basal Cell Carcinoma/basal-cell-carcinoma-face-11.jpg"
+    print("Testing with:", test_img)
+    try:
+        lab, c = predict_condition(test_img)
+        print("Result:", lab, c)
+    except Exception as e:
+        print("Error:", e)

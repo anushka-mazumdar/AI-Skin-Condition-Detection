@@ -29,7 +29,7 @@ def capture_images():
 
 
 def main():
-    print("=== 🧠 AI Skin Condition Detection System ===")
+    print("=== 🧠 AI Skin Condition Detection System (PyTorch) ===")
 
     # 1. Capture user images
     capture_images()
@@ -49,13 +49,16 @@ def main():
     print("\n✨ Enhancing verified images...")
     enhance_all_images(RAW_DIR, ENHANCED_DIR)
 
-    # 4. Skin condition detection
+    # 4. Skin condition detection (PyTorch)
     print("\n🩺 Detecting skin conditions...")
     for img_name in os.listdir(ENHANCED_DIR):
         if img_name.lower().endswith((".jpg", ".png", ".jpeg")):
             path = os.path.join(ENHANCED_DIR, img_name)
-            condition, conf = predict_condition(path)
-            print(f"   -> {img_name}: {condition} ({conf*100:.2f}% confidence)")
+            try:
+                condition, confidence = predict_condition(path)
+                print(f"   -> {img_name}: {condition} ({confidence*100:.2f}% confidence)")
+            except Exception as e:
+                print(f"   -> {img_name}: Prediction error: {e}")
 
     print("\n✅ Full process complete — from capture to condition detection.")
 
